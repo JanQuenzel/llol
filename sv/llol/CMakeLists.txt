@@ -19,7 +19,7 @@ cc_test(
 cc_library(
   NAME llol_imu
   SRCS "imu.cpp"
-  DEPS sv_util_math Sophus::Sophus Boost::boost)
+  DEPS sv_util_math Sophus::Sophus ) #Boost::boost)
 cc_test(
   NAME llol_imu_test
   SRCS "imu_test.cpp"

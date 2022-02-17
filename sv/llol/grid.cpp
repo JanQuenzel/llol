@@ -1,5 +1,6 @@
 #include "sv/llol/grid.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/core.h>
 #include <glog/logging.h>
 #include <tbb/blocked_range.h>
@@ -36,6 +37,12 @@ std::string SweepGrid::Repr() const {
       max_curve,
       max_var,
       nms);
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "SweepGrid(size=[ "<< sv::Repr(size()) <<
+//          " ], cell_size=[ " << sv::Repr(cell_size) <<
+//          " ], max_curve=[ " << max_curve <<
+//          " ], max_var=[ " << max_var <<
+//          " ], nms=" << nms << " ])")).str();
 }
 
 cv::Vec2i SweepGrid::Add(const LidarScan& scan, int gsize) {

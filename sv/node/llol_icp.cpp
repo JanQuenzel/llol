@@ -1,5 +1,7 @@
 #include <glog/logging.h>
 
+//#define FMT_HEADER_ONLY
+//#include "fmt/core.h"
 #include "sv/llol/cost.h"
 #include "sv/node/llol_node.h"
 #include "sv/node/viz.h"
@@ -82,12 +84,13 @@ bool OdomNode::IcpRigid() {
 
     icp_ok = true;
     if (i >= 2 && solver.summary.IsConverged()) {
-      ROS_DEBUG_STREAM(
-          fmt::format("[Icp] converged at outer: {}/{}, inner: {}/{}",
-                      i + 1,
-                      gicp_.outer_iters,
-                      solver.summary.iterations,
-                      gicp_.inner_iters));
+//      ROS_DEBUG_STREAM(
+//          fmt::format("[Icp] converged at outer: {}/{}, inner: {}/{}",
+//                      i + 1,
+//                      gicp_.outer_iters,
+//                      solver.summary.iterations,
+//                      gicp_.inner_iters));
+      ROS_DEBUG_STREAM("[Icp] converged at outer: " << (i + 1) << " / " << gicp_.outer_iters << ", inner: "<< solver.summary.iterations << " / " <<gicp_.inner_iters );
       break;
     }
   }

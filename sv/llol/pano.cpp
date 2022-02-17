@@ -1,5 +1,6 @@
 #include "sv/llol/pano.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/core.h>
 #include <glog/logging.h>
 #include <tbb/blocked_range.h>
@@ -50,6 +51,20 @@ std::string DepthPano::Repr() const {
       sv::Repr(dbuf),
       DepthPixel::kScale,
       DepthPixel::kMaxRange);
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "DepthPano(max_cnt=[ "<< max_cnt <<
+//          " ], min_sweeps=[ " << min_sweeps <<
+//          " ], min_range=[ " << min_range <<
+//          " ], max_range=[ " << max_range <<
+//          " ], win_ratio=[ " << win_ratio <<
+//          " ], fuse_ratio=[ " << fuse_ratio <<
+//          " ], match_ratio=[ " << min_match_ratio <<
+//          " ], align_gravity=[ " << align_gravity <<
+//          " ], max_translation=[ " << max_translation <<
+//          " ], model=[ " << model.Repr() <<
+//          " ], dbuf=[ " << sv::Repr(dbuf) <<
+//          " ], pixel=(scale=[ " << DepthPixel::kScale <<
+//          " ], max_range=[ " << DepthPixel::kMaxRange << " ]))")).str();
 }
 
 int DepthPano::Add(const LidarSweep& sweep, const cv::Range& curr, int gsize) {

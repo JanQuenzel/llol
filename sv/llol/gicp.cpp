@@ -1,5 +1,7 @@
 #include "sv/llol/gicp.h"
 
+//#define FMT_HEADER_ONLY
+#include <fmt/core.h>
 #include <glog/logging.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_reduce.h>
@@ -25,6 +27,11 @@ std::string GicpSolver::Repr() const {
       inner_iters,
       cov_lambda,
       imu_weight);
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "GicpSolver(outer=[ "<< outer_iters <<
+//          " ], inner=[ " << inner_iters <<
+//          " ], cov_lambda=[ " << cov_lambda <<
+//          " ], imu_weight=[ " << imu_weight<< " ])")).str();
 }
 
 int GicpSolver::Match(SweepGrid& grid, const DepthPano& pano, int gsize) {

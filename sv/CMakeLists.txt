@@ -16,7 +16,7 @@ cc_library(
 
 cc_library(
   NAME log
-  DEPS fmt::fmt glog::glog
+  DEPS fmt::fmt glog
   INTERFACE)
 
 add_subdirectory(util)

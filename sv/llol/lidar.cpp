@@ -1,5 +1,6 @@
 #include "sv/llol/lidar.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/core.h>
 #include <glog/logging.h>
 
@@ -88,6 +89,11 @@ std::string LidarModel::Repr() const {
       Rad2Deg(elev_max),
       Rad2Deg(elev_delta),
       Rad2Deg(azim_delta));
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "LidarModel(size=[ "<< sv::Repr(size) <<
+//          " ], elev_max=[ " << Rad2Deg(elev_max) <<
+//          " ], elev_delta=[ " << Rad2Deg(elev_delta) <<
+//          " ], azim_delta=[ " << Rad2Deg(azim_delta) << " ])")).str();
 }
 
 }  // namespace sv

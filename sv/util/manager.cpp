@@ -1,5 +1,6 @@
 #include "sv/util/manager.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/color.h>
 #include <fmt/ostream.h>
 #include <glog/logging.h>
@@ -9,7 +10,7 @@ namespace sv {
 std::string StatsManager::ReportStats(const std::string& name,
                                       const StatsT& stats) const {
   std::string str = fmt::format(fmt::fg(fmt::color::cyan), "[{:<16}]", name);
-
+//      "[" + name + "]";
   str += fmt::format(
       " n: {:<16} | sum: {:<14.4e} | min: {:<14.4f} | max: {:<14.4f} | "
       "mean: {:<14.4f} | last: {:<14.4f} |",
@@ -20,6 +21,14 @@ std::string StatsManager::ReportStats(const std::string& name,
       stats.mean(),
       stats.last());
   return str;
+//  str += (static_cast<std::stringstream&>(std::stringstream()
+//          << " n=" << stats.count()
+//          << ", sum=" << stats.sum()
+//          << ", min=" << stats.min()
+//          << ", max=" << stats.max()
+//          << ", mean=" << stats.mean()
+//          << ", last=" << stats.last())).str();
+//  return str;
 }
 
 StatsManager& GlobalStatsManager() {
@@ -58,8 +67,8 @@ void TimerManager::ManualTimer::Commit() {
 
 std::string TimerManager::ReportStats(const std::string& name,
                                       const StatsT& stats) const {
-  std::string str =
-      fmt::format(fmt::fg(fmt::color::light_sky_blue), "[{:<16}]", name);
+  std::string str = fmt::format(fmt::fg(fmt::color::light_sky_blue), "[{:<16}]", name);
+//      "[" + name + "]";
   str += fmt::format(
       " n: {:<16} | sum: {:<14} | min: {:<14} | max: {:<14} | mean: {:<14} | "
       "last: {:<14} |",
@@ -69,6 +78,14 @@ std::string TimerManager::ReportStats(const std::string& name,
       stats.max(),
       stats.mean(),
       stats.last());
+
+//  str += (static_cast<std::stringstream&>(std::stringstream()
+//          << " n=" << stats.count()
+//          << ", sum=" << stats.sum()
+//          << ", min=" << stats.min()
+//          << ", max=" << stats.max()
+//          << ", mean=" << stats.mean()
+//          << ", last=" << stats.last())).str();
   return str;
 }
 

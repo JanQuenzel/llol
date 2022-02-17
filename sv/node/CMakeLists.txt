@@ -7,7 +7,7 @@ cc_library(
 cc_library(
   NAME node_viz
   SRCS "viz.cpp"
-  DEPS sv_llol_grid sv_llol_pano sv_ros1 opencv_highgui opencv_imgproc)
+  DEPS sv_llol_grid sv_llol_pano sv::ros1 opencv_highgui opencv_imgproc)
 
 cc_library(
   NAME node_pcl
