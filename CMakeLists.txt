@@ -39,7 +39,7 @@ find_package(
 find_package(TBB REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Glog REQUIRED)
-find_package(absl REQUIRED)
+#find_package(absl REQUIRED)
 #find_package(Boost REQUIRED)
 
 find_package(Sophus REQUIRED)
@@ -58,7 +58,7 @@ if(catkin_FOUND AND BUILD_NODE)
 #  include_directories(${catkin_INCLUDE_DIRS})
 endif()
 
-#add_subdirectory(abseil-cpp)
+add_subdirectory(abseil-cpp)
 #add_subdirectory(fmt)
 
 enable_testing()
