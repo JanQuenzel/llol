@@ -1,5 +1,6 @@
 #include "sv/llol/imu.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/ostream.h>
 #include <glog/logging.h>
 
@@ -55,6 +56,11 @@ std::string ImuBias::Repr() const {
                      gyr.transpose(),
                      acc_var.transpose(),
                      gyr_var.transpose());
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "ImuBias(acc=[ "<< acc.transpose() <<
+//          " ], gyr=[ " << gyr.transpose() <<
+//          " ], acc_var=[ " << acc_var.transpose() <<
+//          " ], gyr_var=[ " << gyr_var.transpose() << " ])")).str();
 }
 
 void ImuBias::UpdateAcc(const Eigen::Vector3d& z, const Eigen::Vector3d& R) {
@@ -73,6 +79,11 @@ std::string NavState::Repr() const {
                      rot.unit_quaternion().coeffs().transpose(),
                      pos.transpose(),
                      vel.transpose());
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "NavState(t=[ "<< time <<
+//          " ], rot=[ " << rot.unit_quaternion().coeffs().transpose() <<
+//          " ], pos=[ " << pos.transpose() <<
+//          " ], vel=[ " << vel.transpose() << " ])")).str();
 }
 
 void ImuData::Debias(const ImuBias& bias) {
@@ -182,6 +193,11 @@ std::string ImuNoise::Repr() const {
       sigma2.segment<3>(kNw).transpose(),
       sigma2.segment<3>(kNba).transpose(),
       sigma2.segment<3>(kNbw).transpose());
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "ImuNoise(acc_cov=[ "<< sigma2.segment<3>(kNa).transpose() <<
+//          " ], gyr_cov=[ " << sigma2.segment<3>(kNw).transpose() <<
+//          " ], acc_bias_cov=[ " << sigma2.segment<3>(kNba).transpose() <<
+//          " ], gyr_bias_cov=[ " << sigma2.segment<3>(kNbw).transpose() << " ])")).str();
 }
 
 std::string ImuQueue::Repr() const {
@@ -190,6 +206,11 @@ std::string ImuQueue::Repr() const {
                      capacity(),
                      bias,
                      noise);
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "NavState(size="<< size() <<
+//          "/" << capacity() <<
+//          ", bias= " << bias <<
+//          ", noise= " << noise << ")")).str();
 }
 
 void sv::ImuQueue::Add(const ImuData& imu_in) {
@@ -219,7 +240,7 @@ void sv::ImuQueue::Add(const ImuData& imu_in) {
 int ImuQueue::IndexAfter(double t) const {
   int ibuf = GetImuIndexAfterTime(buf, t);
   if (ibuf == size()) {
-    ibuf = size() - 1;
+    //ibuf = size() - 1;
     LOG(WARNING) << fmt::format(
         "All imus are before time {}. Imu buffer size is {}, and the last imu "
         "in buffer has time {}, t0 - imu1.time = {}, set ibuf to {}",
@@ -228,6 +249,8 @@ int ImuQueue::IndexAfter(double t) const {
         buf.back().time,
         t - buf.back().time,
         ibuf);
+//    LOG(WARNING) << "All imus are before time " << t << ". Imu buffer size is " << size() << ", and the last imu " <<
+//                    "in buffer has time " << buf.back().time << ", t0 - imu1.time = " << (t - buf.back().time) << ", set ibuf to " << ibuf;
   } else if (ibuf == 0) {
     ibuf = 1;
     LOG(WARNING) << fmt::format(
@@ -238,6 +261,8 @@ int ImuQueue::IndexAfter(double t) const {
         buf.front().time,
         buf.front().time - t,
         ibuf);
+//    LOG(WARNING) << "All imus are after time " << t << ". Imu buffer size is " << size() << ", and the first imu " <<
+//                    "in buffer has time " << buf.front().time << ", t0 - imu1.time = " << (t - buf.front().time) << ", set ibuf to " << ibuf;
   }
   return ibuf;
 }
@@ -262,6 +287,7 @@ ImuData ImuQueue::CalcMean(int last_n) const {
 
 /// ImuPreintegration ==========================================================
 int ImuPreintegration::Compute(const ImuQueue& imuq, double t0, double t1) {
+  if ( (t1-t0) < 0 ) { LOG(WARNING) << "Compute dt > 0 ! t0: " << uint64_t(t0*1e9) << " t1: " << uint64_t(t1*1e9) << " s: " << imuq.size(); throw std::runtime_error(""); }
   CHECK_LT(t0, t1);
   int ibuf = imuq.IndexAfter(t0);
   // If we could not find an imu that is after the current time, just set weight
@@ -274,10 +300,14 @@ int ImuPreintegration::Compute(const ImuQueue& imuq, double t0, double t1) {
 
   // Keep integrate till we reach either the last imu or one right before t1
   double t = t0;
-
+  {
+    const auto imu = imuq.DebiasedAt(ibuf);
+    if ( (imu.time - t) < 0 ) LOG(WARNING) << "Start dt < 0 ! t: " << uint64_t(t*1e9) << " it: " << uint64_t(imu.time*1e9) << " ib: " << ibuf << " s: " << imuq.size();
+  }
   while (true) {
     // This imu must exist
     const auto imu = imuq.DebiasedAt(ibuf);
+    if ( (imu.time - t) < 0 ) LOG(WARNING) << "Loop dt < 0 ! t: " << uint64_t(t*1e9) << " it: " << uint64_t(imu.time*1e9) << " ib: " << ibuf << " s: " << imuq.size();
     Integrate(imu.time - t, imu, imuq.noise);
     t = imu.time;
 
@@ -292,6 +322,7 @@ int ImuPreintegration::Compute(const ImuQueue& imuq, double t0, double t1) {
 
   // Use the imu at ibuf to finish integrating to t1
   const auto imu = imuq.DebiasedAt(ibuf);
+  if ( (t1 - imu.time) < 0 ) LOG(WARNING) << "dt < 0 ! t1: " << uint64_t(t1*1e9) << " it: " << uint64_t(imu.time*1e9) << " ib: " << ibuf << " s: " << imuq.size();
   Integrate(t1 - imu.time, imu, imuq.noise);
 
   // Compute sqrt info

@@ -1,8 +1,9 @@
 #include "sv/llol/sweep.h"
 
+//#define FMT_HEADER_ONLY
+#include <fmt/core.h>
 #include <glog/logging.h>
 #include <tbb/parallel_for.h>
-
 #include <opencv2/core.hpp>
 
 #include "sv/util/ocv.h"
@@ -62,6 +63,11 @@ std::string LidarSweep::Repr() const {
                      dt,
                      sv::Repr(mat),
                      sv::Repr(curr));
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "LidarSweep(t0=[ "<< time <<
+//          " ], dt=[ " << dt <<
+//          " ], xyzr=[ " << sv::Repr(mat) <<
+//          " ], col_range=[ " << sv::Repr(curr) << " ])")).str();
 }
 
 LidarSweep MakeTestSweep(const cv::Size& size) {

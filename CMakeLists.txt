@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(llol)
 
 set(CMAKE_CXX_STANDARD 17)
+#set(ABSL_PROPAGATE_CXX_STD OFF)
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 option(BUILD_NODE "Build ros nodes" On)
@@ -28,15 +29,18 @@ find_package(
              image_transport
              pcl_conversions
              nav_msgs
+#             rosfmt
+#             abseil_cpp
              sensor_msgs
              diagnostic_msgs
+             geometry_msgs
              visualization_msgs)
 
 find_package(TBB REQUIRED)
 find_package(fmt REQUIRED)
-find_package(glog REQUIRED)
+find_package(Glog REQUIRED)
 find_package(absl REQUIRED)
-find_package(Boost REQUIRED)
+#find_package(Boost REQUIRED)
 
 find_package(Sophus REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -51,8 +55,11 @@ endif()
 
 if(catkin_FOUND AND BUILD_NODE)
   catkin_package()
-
+#  include_directories(${catkin_INCLUDE_DIRS})
 endif()
+
+#add_subdirectory(abseil-cpp)
+#add_subdirectory(fmt)
 
 enable_testing()
 add_subdirectory(sv)

@@ -1,5 +1,6 @@
 #include "sv/llol/traj.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/ostream.h>
 #include <glog/logging.h>
 
@@ -33,6 +34,14 @@ std::string Trajectory::Repr() const {
       g_pano.transpose(),
       T_imu_lidar.matrix3x4(),
       T_odom_pano.matrix3x4());
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "Trajectory(size=[ "<< size() <<
+//          " ], use_acc=[ " << use_acc <<
+//          " ], update_bias=[ " << update_bias <<
+//          " ], g_norm=[ " << gravity_norm <<
+//          " ], g_pano=[ " << g_pano.transpose() <<
+//          " ], nT_imu_lidar=[ \n" << T_imu_lidar.matrix3x4() <<
+//          " \n], T_odom_pano=[ \n" << T_odom_pano.matrix3x4() << " ])")).str();
 }
 
 void Trajectory::Init(const SE3d& tf_i_l, const Vector3d& acc) {
@@ -72,7 +81,6 @@ int Trajectory::PredictNew(const ImuQueue& imuq, double t0, double dt, int n) {
 
   // Find the first imu from buffer that is right after t0
   int ibuf = imuq.IndexAfter(t0);
-
   const int ibuf0 = ibuf;
 
   // Find the state to start prediction
@@ -80,6 +88,22 @@ int Trajectory::PredictNew(const ImuQueue& imuq, double t0, double dt, int n) {
   // update the time of the state where we will start the prediction
   states.at(ist0).time = t0;
   const auto& st0 = At(ist0);
+
+  if (ibuf == imuq.size())
+  {
+      for (int ist = ist0 + 1; ist < size(); ++ist) {
+        // time of the ith state
+        const auto ti = t0 + dt * (ist - ist0);
+        const auto& prev = At(ist - 1);
+        auto& curr = At(ist);
+
+        curr.time = prev.time + dt;
+        curr.vel = prev.vel;
+        curr.pos = prev.pos + prev.vel * dt;
+        curr.rot = prev.rot;
+      }
+      return 0;
+  }
 
   auto imu0 = imuq.DebiasedAt(ibuf - 1);
   auto imu1 = imuq.DebiasedAt(ibuf);
@@ -113,7 +137,23 @@ int Trajectory::PredictNew(const ImuQueue& imuq, double t0, double dt, int n) {
 
 int Trajectory::PredictFull(const ImuQueue& imuq) {
   int ibuf = imuq.IndexAfter(front().time);
+  //if (ibuf == imuq.size()) return 0;
   const int ibuf0 = ibuf;
+
+  if (ibuf == imuq.size())
+  {
+      for (int ist = 1; ist < size(); ++ist) {
+        const auto& prev = At(ist - 1);
+        auto& curr = At(ist);
+        const auto dt = curr.time - prev.time;
+
+        curr.time = prev.time + dt;
+        curr.vel = prev.vel;
+        curr.pos = prev.pos + prev.vel * dt;
+        curr.rot = prev.rot;
+      }
+      return 0;
+  }
 
   auto imu0 = imuq.DebiasedAt(ibuf - 1);
   auto imu1 = imuq.DebiasedAt(ibuf);

@@ -1,8 +1,10 @@
 #include "sv/node/llol_node.h"
-
 #include <absl/strings/match.h>
 
 #include "sv/node/viz.h"
+
+//#define FMT_HEADER_ONLY
+//#include <fmt/core.h>
 
 namespace sv {
 
@@ -11,6 +13,7 @@ static constexpr double kMaxRange = 32.0;
 OdomNode::OdomNode(const ros::NodeHandle& pnh)
     : pnh_{pnh}, it_{pnh}, tf_listener_{tf_buffer_} {
   sub_camera_ = it_.subscribeCamera("image", 8, &OdomNode::CameraCb, this);
+  sub_lidar_ = pnh_.subscribe("cloud", 8, &OdomNode::LidarCb, this);
   sub_imu_ = pnh_.subscribe(
       "imu", 100, &OdomNode::ImuCb, this, ros::TransportHints().tcpNoDelay());
 
@@ -63,8 +66,9 @@ void OdomNode::ImuCb(const sensor_msgs::Imu& imu_msg) {
   }
 
   if (!imuq_.full()) {
-    ROS_WARN_STREAM(fmt::format(
-        "Imu queue not full: {}/{}", imuq_.size(), imuq_.capacity()));
+//    ROS_WARN_STREAM(fmt::format(
+//        "Imu queue not full: {}/{}", imuq_.size(), imuq_.capacity()));
+    ROS_WARN_STREAM("Imu queue not full: " << imuq_.size() <<" / " << imuq_.capacity());
     return;
   }
 
@@ -126,6 +130,82 @@ void OdomNode::Initialize(const sensor_msgs::CameraInfo& cinfo_msg) {
   ROS_INFO_STREAM(gicp_);
 }
 
+void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
+    if ( !cloud_msg->is_dense ) return;
+
+    constexpr float freq = 20;
+    constexpr int range_scale = 512;
+    constexpr uint32_t pixel_step = sizeof(float)*4;
+    const uint32_t point_step = cloud_msg->point_step;
+    const size_t num_points = cloud_msg->width * cloud_msg->height;
+
+    static sensor_msgs::CameraInfo::Ptr cinfo_msg = nullptr; ( new sensor_msgs::CameraInfo );
+    static sensor_msgs::Image::Ptr image_msg  = nullptr;
+
+    if ( ! cinfo_msg  )
+    {
+        cinfo_msg = sensor_msgs::CameraInfo::Ptr( new sensor_msgs::CameraInfo );
+        image_msg = sensor_msgs::Image::Ptr( new sensor_msgs::Image );
+        cinfo_msg->width = cloud_msg->width;
+        cinfo_msg->height = cloud_msg->height;
+        cinfo_msg->K[0] = 1.0 / freq / cloud_msg->width; // dt
+        cinfo_msg->R[0] = range_scale; // range scale
+        cinfo_msg->binning_x = 0; // iscan;
+        cinfo_msg->binning_y = 0; // model.cols / cloud_msg->width;
+        cinfo_msg->roi.x_offset = 0; //iscan * cloud_msg->width;
+        cinfo_msg->roi.y_offset = 0;
+        cinfo_msg->roi.width = cloud_msg->width;
+        cinfo_msg->roi.height = cloud_msg->height;
+        cinfo_msg->roi.do_rectify = false;
+
+        image_msg->data.resize( num_points * pixel_step );
+        image_msg->step = cloud_msg->width * pixel_step;
+        image_msg->encoding = "32FC4";
+        image_msg->height = cloud_msg->height;
+        image_msg->width = cloud_msg->width;
+    }
+
+    cinfo_msg->header = cloud_msg->header;
+    image_msg->header = cloud_msg->header;
+
+//    float x{};
+//    float y{};
+//    float z{};
+//    uint16_t r{};
+//    uint16_t intensity{};
+
+    constexpr uint32_t pixel_range_offset = sizeof(float)*3;
+    constexpr uint32_t pixel_intensity_offset = sizeof(float)*3+sizeof(uint16_t);
+    uint32_t offset_reflectivity = 0;
+    for(size_t i=0; i<cloud_msg->fields.size(); ++i)
+        if ( cloud_msg->fields[i].name=="reflectivity" )
+            offset_reflectivity = cloud_msg->fields[i].offset;
+
+    //cv::Mat img = cv::Mat(cloud_msg->height, cloud_msg->width, CV_8UC1);
+    //ROS_INFO_STREAM( "size: h: " << cloud_msg->height << " w: " << cloud_msg->width << " np: " << num_points);
+    for ( size_t i = 0; i < num_points; ++i )
+    {
+        // the cloud is col major
+        const int row = i % cloud_msg->height;
+        const int col = i / cloud_msg->height;
+        const uint32_t i_new = col + row * cloud_msg->width;
+        //const uint32_t i_new = row + col * cloud_msg->height;
+
+        //ROS_ERROR_STREAM( "sizes dont match: " << row )
+
+        const uint32_t point_start = point_step * i;
+        const uint32_t pixel_start = pixel_step * i_new;
+        const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
+        Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
+        *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
+        *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) =
+                *reinterpret_cast<const uint16_t*>(&cloud_msg->data[point_start + offset_reflectivity]);
+    //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
+    }
+    //cv::imwrite("./blub.png", img);
+    CameraCb(image_msg, cinfo_msg);
+}
+
 void OdomNode::CameraCb(const sensor_msgs::ImageConstPtr& image_msg,
                         const sensor_msgs::CameraInfoConstPtr& cinfo_msg) {
   static std_msgs::Header prev_header;
@@ -144,8 +224,9 @@ void OdomNode::CameraCb(const sensor_msgs::ImageConstPtr& image_msg,
   }
 
   if (!imuq_.full()) {
-    ROS_WARN_STREAM(fmt::format(
-        "Imu queue not full: {}/{}", imuq_.size(), imuq_.capacity()));
+//    ROS_WARN_STREAM(fmt::format(
+//        "Imu queue not full: {}/{}", imuq_.size(), imuq_.capacity()));
+    ROS_WARN_STREAM("Imu queue not full: " << imuq_.size() << " / " << imuq_.capacity());
     return;
   }
 
@@ -257,14 +338,18 @@ void OdomNode::PostProcess() {
 
   int n_render = 0;
   if (pano_.ShouldRender(T_p2_p1, match_ratio)) {
-    ROS_WARN_STREAM(
-        "=Render= " << fmt::format(
-            "sweeps: {:2.3f}, trans: {:.3f}, match: {:.2f}% = {}/{}",
-            pano_.num_sweeps,
-            T_p1_p2.translation().norm(),
-            match_ratio * 100,
-            num_matches,
-            num_good_cells));
+//    ROS_WARN_STREAM(
+//        "=Render= " << fmt::format(
+//            "sweeps: {:2.3f}, trans: {:.3f}, match: {:.2f}% = {}/{}",
+//            pano_.num_sweeps,
+//            T_p1_p2.translation().norm(),
+//            match_ratio * 100,
+//            num_matches,
+//            num_good_cells));
+    ROS_WARN_STREAM("=Render= sweeps: " << pano_.num_sweeps
+                    << ", trans: " << T_p1_p2.translation().norm()
+                    << ", match: " << (match_ratio * 100)
+                    << " = " << num_matches << " / "<< num_good_cells );
 
     // TODO (chao): need to think about how to run this in background without
     // interfering with odom

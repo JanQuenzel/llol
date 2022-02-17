@@ -1,5 +1,6 @@
 #include "sv/util/nlls.h"
 
+//#define FMT_HEADER_ONLY
 #include <fmt/core.h>
 #include <glog/logging.h>
 
@@ -29,6 +30,12 @@ std::string NllsSummary::Report() const {
       gradient_max_norm,
       iterations,
       Repr(status));
+//  return (static_cast<std::stringstream&>(std::stringstream()
+//          << "init_cost=" << initial_cost
+//          << ", final_cost=" << final_cost
+//          << ", grad_max_norm=" << gradient_max_norm
+//          << ", iters=" << iterations
+//          << ", status=" << Repr(status))).str();
 }
 
 bool NllsSummary::IsConverged() const {

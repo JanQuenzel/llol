@@ -3,6 +3,7 @@
 #include <image_transport/image_transport.h>
 #include <ros/node_handle.h>
 #include <ros/subscriber.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <tf2_ros/transform_listener.h>
 
 #include "sv/node/conv.h"
@@ -16,6 +17,7 @@ struct OdomNode {
   image_transport::ImageTransport it_;
   image_transport::CameraSubscriber sub_camera_;
   ros::Subscriber sub_imu_;
+  ros::Subscriber sub_lidar_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
@@ -52,6 +54,7 @@ struct OdomNode {
   /// Methods
   OdomNode(const ros::NodeHandle& pnh);
   void ImuCb(const sensor_msgs::Imu& imu_msg);
+  void LidarCb(const sensor_msgs::PointCloud2ConstPtr& lidar_msg);
   void CameraCb(const sensor_msgs::ImageConstPtr& image_msg,
                 const sensor_msgs::CameraInfoConstPtr& cinfo_msg);
   void Publish(const std_msgs::Header& header);

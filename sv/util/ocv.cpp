@@ -1,7 +1,11 @@
 #include "sv/util/ocv.h"
 
+//#include <fmt/full.h>
+//#define FMT_HEADER_ONLY
 #include <fmt/color.h>
 #include <glog/logging.h>
+#include <ostream>
+#include <sstream>
 
 namespace sv {
 
@@ -51,14 +55,17 @@ std::string Repr(const cv::Mat& mat) {
                      mat.cols,
                      mat.channels(),
                      mat.depth());
+//  return (static_cast<std::stringstream&>(std::stringstream()<< "(hwc=("<<mat.rows<< ", "<< mat.cols<< ","<< mat.channels()<< "), depth=" << mat.depth() << ")")).str();
 }
 
 std::string Repr(const cv::Size& size) {
   return fmt::format("(h={}, w={})", size.height, size.width);
+//  return (static_cast<std::stringstream&>(std::stringstream()<< "(h="<<size.height<< ", w=" << size.width << ")")).str();
 }
 
 std::string Repr(const cv::Range& range) {
   return fmt::format("[{},{})", range.start, range.end);
+//   return (static_cast<std::stringstream&>(std::stringstream()<< "[h="<<range.start<< ", " << range.end<< ")")).str();
 }
 
 }  // namespace sv
