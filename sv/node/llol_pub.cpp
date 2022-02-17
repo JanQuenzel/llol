@@ -138,6 +138,17 @@ void OdomNode::Publish(const std_msgs::Header& header) {
   SE3dToMsg(traj_.TfOdomLidar(), pose.pose);
   pub_pose.publish(pose);
 
+  {
+    // write to file:
+    static std::ofstream posesFile ("./llol_after_map_poses.txt");
+    if( posesFile.is_open() )
+    {
+      posesFile << (pose.header.stamp.toNSec()) << " " << pose.pose.position.x << " " << pose.pose.position.y << " " << pose.pose.position.z
+                << " " << pose.pose.orientation.x << " " << pose.pose.orientation.y << " " << pose.pose.orientation.z << " " << pose.pose.orientation.w <<"\n";
+    }
+  }
+
+
   if (pub_pose_cov.getNumSubscribers() > 0) {
     PoseWithCovarianceStamped pose_cov;
     pose_cov.header = pose.header;
