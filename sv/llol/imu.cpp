@@ -297,6 +297,11 @@ int ImuPreintegration::Compute(const ImuQueue& imuq, double t0, double t1) {
     CHECK_EQ(n, 0);
     return 0;
   }
+  if ( imuq.RawAt(ibuf).time >= t1) {
+    LOG(WARNING) << "Imu time " << imuq.RawAt(ibuf).time << " is not earlier than ... " << t1;
+    CHECK_EQ(n, 0);
+    return 0;
+  }
 
   // Keep integrate till we reach either the last imu or one right before t1
   double t = t0;

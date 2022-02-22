@@ -10,6 +10,7 @@ option(BUILD_TESTING "Build tests" Off)
 option(BUILD_BENCHMARK "Build benchmarks" Off)
 option(BUILD_MARCH_NATIVE "Build with -march=native" OFF)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CC_TARGET_PREFIX sv)
 include(CMakeHelpers)
 
@@ -18,6 +19,13 @@ include(CompilerWarnings)
 enable_warnings(sv_options)
 include(Sanitizers)
 enable_sanitizers(sv_options)
+
+# build static to prevent issues with multiple abseil packages in same workspace
+set( BUILD_SHARED_LIBS_TMP ${BUILD_SHARED_LIBS})
+set( BUILD_SHARED_LIBS OFF)
+add_subdirectory(abseil-cpp)
+set( BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_TMP})
+
 
 find_package(
   catkin QUIET
@@ -58,7 +66,6 @@ if(catkin_FOUND AND BUILD_NODE)
 #  include_directories(${catkin_INCLUDE_DIRS})
 endif()
 
-add_subdirectory(abseil-cpp)
 #add_subdirectory(fmt)
 
 enable_testing()
