@@ -5,22 +5,27 @@
     <arg name="debug" default="false"/>
     <env if="$(arg debug)" name="ROSCONSOLE_CONFIG_FILE" value="$(find llol)/launch/debug.conf"/>
 
-    <arg name="tbb" default="1"/>
+    <!--<rosparam command="load" file="$(find llol)/launch/drz_ouster_128_metadata_string.yaml" />-->
+
+    <arg name="tbb" default="0"/>
     <arg name="log" default="0"/>
     <arg name="vis" default="false"/>
     <arg name="rigid" default="true"/>
     <arg name="odom_frame" default="odom"/>
 
-    <!--<include file="$(find ouster_decoder)/launch/driver.launch" />
-    <include file="$(find ouster_decoder)/launch/decoder.launch" />-->
+    <include file="$(find ouster_decoder)/launch/driver.launch" />
+    <include file="$(find ouster_decoder)/launch/decoder.launch" />
     <!-- catkin b llol -DCMAKE_PREFIX_PATH=~/Projects/abseil-cpp/install -DCMAKE_BUILD_TYPE=Release -->
     <node pkg="tf" type="static_transform_publisher" name="baselink_BodyFLU_broadcaster" args="1 0 0 0 0 0 1 base_link body_FLU 100" />
 
+   <!-- <node pkg="rostopic" type="pub" name="os_metadata_pub" launch-prefix="/bin/bash -c '$* \"data:`rosparam get os_node_metadata_string`'\" -" output="screen" /> -->
+
+
     <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen" ns="os_node">
-        <remap from="~imu" to="/dji_sdk/imu"/>
+        <!--<remap from="~imu" to="/dji_sdk/imu"/>-->
+        <remap from="~imu" to="imu"/>
         <remap from="~image" to="image"/>
         <remap from="~camera_info" to="camera_info"/>
-        <remap from="~cloud" to="/os_cloud_node/points"/>
 
         <rosparam command="load" file="$(find llol)/config/llol_drz.yaml" />
         <param name="tbb" type="int" value="$(arg tbb)"/>
@@ -29,4 +34,5 @@
         <param name="rigid" type="bool" value="$(arg rigid)"/>
         <param name="odom_frame" type="string" value="$(arg odom_frame)"/>
     </node>
+
 </launch>

@@ -24,6 +24,7 @@ enable_sanitizers(sv_options)
 set( BUILD_SHARED_LIBS_TMP ${BUILD_SHARED_LIBS})
 set( BUILD_SHARED_LIBS OFF)
 add_subdirectory(abseil-cpp)
+add_subdirectory(Sophus)
 set( BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_TMP})
 
 
@@ -50,7 +51,7 @@ find_package(Glog REQUIRED)
 #find_package(absl REQUIRED)
 #find_package(Boost REQUIRED)
 
-find_package(Sophus REQUIRED)
+#find_package(Sophus REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
@@ -66,6 +67,7 @@ if(catkin_FOUND AND BUILD_NODE)
 #  include_directories(${catkin_INCLUDE_DIRS})
 endif()
 
+include_directories($(PROJECT_SOURCE_DIR)/Sophus)
 #add_subdirectory(fmt)
 
 enable_testing()
