@@ -11,9 +11,6 @@
     <arg name="rigid" default="true"/>
     <arg name="odom_frame" default="odom"/>
 
-    <!--<include file="$(find ouster_decoder)/launch/driver.launch" />
-    <include file="$(find ouster_decoder)/launch/decoder.launch" />-->
-    <!-- catkin b llol -DCMAKE_PREFIX_PATH=~/Projects/abseil-cpp/install -DCMAKE_BUILD_TYPE=Release -->
     <node pkg="tf" type="static_transform_publisher" name="baselink_BodyFLU_broadcaster" args="1 0 0 0 0 0 1 base_link body_FLU 100" />
 
     <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen" ns="os_node">
@@ -22,7 +19,7 @@
         <remap from="~camera_info" to="camera_info"/>
         <remap from="~cloud" to="/os_cloud_node/points"/>
 
-        <rosparam command="load" file="$(find llol)/config/llol_drz.yaml" />
+        <rosparam command="load" file="$(find llol)/config/llol_drz_dji.yaml" />
         <param name="tbb" type="int" value="$(arg tbb)"/>
         <param name="log" type="int" value="$(arg log)"/>
         <param name="vis" type="bool" value="$(arg vis)"/>
