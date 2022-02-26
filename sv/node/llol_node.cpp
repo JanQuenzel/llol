@@ -29,6 +29,8 @@ OdomNode::OdomNode(const ros::NodeHandle& pnh)
   log_ = pnh_.param<int>("log", 0);
   ROS_INFO_STREAM("Log interval: " << log_);
 
+  tf_overwrite_ = pnh_.param<bool>("tf_overwrite", false);
+
   rigid_ = pnh_.param<bool>("rigid", true);
   ROS_WARN_STREAM("GICP: " << (rigid_ ? "Rigid" : "Linear"));
 
@@ -80,7 +82,10 @@ void OdomNode::ImuCb(const sensor_msgs::Imu& imu_msg) {
     const auto& t = tf_i_l.transform.translation;
     const auto& q = tf_i_l.transform.rotation;
     const Eigen::Vector3d t_i_l{t.x, t.y, t.z};
-    const Eigen::Quaterniond q_i_l{q.w, q.x, q.y, q.z};
+//    const Eigen::Quaterniond q_i_l{q.w, q.x, q.y, q.z};
+    const Eigen::Quaterniond q_i_l = tf_overwrite_ ?
+         Eigen::Quaterniond(0, 1, -1, 0).normalized() :
+         Eigen::Quaterniond(q.w, q.x, q.y, q.z);
 
     // Just use current acc
     ROS_INFO_STREAM("buffer size: " << imuq_.size());

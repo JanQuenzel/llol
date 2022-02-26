@@ -20,6 +20,7 @@
         <remap from="~cloud" to="/os_cloud_node/points"/>
 
         <rosparam command="load" file="$(find llol)/config/llol_drz_dji.yaml" />
+        <param name="tf_overwrite" type="bool" value="true"/>
         <param name="tbb" type="int" value="$(arg tbb)"/>
         <param name="log" type="int" value="$(arg log)"/>
         <param name="vis" type="bool" value="$(arg vis)"/>
