@@ -3,8 +3,7 @@
 
 #include "sv/node/viz.h"
 
-//#define FMT_HEADER_ONLY
-//#include <fmt/core.h>
+#include <tbb/parallel_for.h>
 
 namespace sv {
 
@@ -173,12 +172,6 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
     cinfo_msg->header = cloud_msg->header;
     image_msg->header = cloud_msg->header;
 
-//    float x{};
-//    float y{};
-//    float z{};
-//    uint16_t r{};
-//    uint16_t intensity{};
-
     constexpr uint32_t pixel_range_offset = sizeof(float)*3;
     constexpr uint32_t pixel_intensity_offset = sizeof(float)*3+sizeof(uint16_t);
     uint32_t offset_reflectivity = 0;
@@ -188,25 +181,29 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
     //cv::Mat img = cv::Mat(cloud_msg->height, cloud_msg->width, CV_8UC1);
     //ROS_INFO_STREAM( "size: h: " << cloud_msg->height << " w: " << cloud_msg->width << " np: " << num_points);
-    for ( size_t i = 0; i < num_points; ++i )
-    {
-        // the cloud is col major
-        const int row = i % cloud_msg->height;
-        const int col = i / cloud_msg->height;
-        const uint32_t i_new = col + row * cloud_msg->width;
-        //const uint32_t i_new = row + col * cloud_msg->height;
+    tbb::parallel_for(tbb::blocked_range<int>(0, num_points),
+	 [&]( const tbb::blocked_range<int> & r )
+      {
+      for ( int i = r.begin(); i < r.end(); ++i )
+      {
+          // the cloud is col major
+          const int row = i % cloud_msg->height;
+          const int col = i / cloud_msg->height;
+          const uint32_t i_new = col + row * cloud_msg->width;
+          //const uint32_t i_new = row + col * cloud_msg->height;
 
-        //ROS_ERROR_STREAM( "sizes dont match: " << row )
+          //ROS_ERROR_STREAM( "sizes dont match: " << row )
 
-        const uint32_t point_start = point_step * i;
-        const uint32_t pixel_start = pixel_step * i_new;
-        const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
-        Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
-        *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
-        *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) =
-                *reinterpret_cast<const uint16_t*>(&cloud_msg->data[point_start + offset_reflectivity]);
-    //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
-    }
+          const uint32_t point_start = point_step * i;
+          const uint32_t pixel_start = pixel_step * i_new;
+          const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
+          Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
+          *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
+          *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) =
+                  *reinterpret_cast<const uint16_t*>(&cloud_msg->data[point_start + offset_reflectivity]);
+      //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
+      }
+    });
     //cv::imwrite("./blub.png", img);
     CameraCb(image_msg, cinfo_msg);
 }
