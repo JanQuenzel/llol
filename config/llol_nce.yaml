@@ -18,8 +18,8 @@ grid:
   max_var: 0.1
   nms: true
 gicp:
-  outer: 3
-  inner: 3
+  outer: 5
+  inner: 5
   half_rows: 2
   half_cols: 2
   cov_lambda: 0.0

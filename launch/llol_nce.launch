@@ -4,13 +4,15 @@
 
     <arg name="tbb" default="0"/>
     <arg name="log" default="0"/>
-    <arg name="vis" default="true"/>
+    <arg name="vis" default="false"/>
+    <arg name="pc_row_major" default="true"/>
     <arg name="rigid" default="true"/>
     <arg name="odom_frame" default="odom"/>
 
     <!--<include file="$(find ouster_decoder)/launch/driver.launch" />
     <include file="$(find ouster_decoder)/launch/decoder.launch" />-->
-    <!-- catkin b llol -DCMAKE_PREFIX_PATH=~/Projects/abseil-cpp/install -DCMAKE_BUILD_TYPE=Release -->
+ 
+    <node pkg="tf" type="static_transform_publisher" name="imu_tf" args=" 0 0 0 0 0 0 imu_link imu_sensor_frame 100 " />
 
     <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen" ns="os_node">
         <remap from="~imu" to="/alphasense_driver_ros/imu"/>
@@ -22,6 +24,7 @@
         <param name="tbb" type="int" value="$(arg tbb)"/>
         <param name="log" type="int" value="$(arg log)"/>
         <param name="vis" type="bool" value="$(arg vis)"/>
+        <param name="pc_row_major" type="bool" value="$(arg pc_row_major)"/>
         <param name="rigid" type="bool" value="$(arg rigid)"/>
         <param name="odom_frame" type="string" value="$(arg odom_frame)"/>
     </node>
