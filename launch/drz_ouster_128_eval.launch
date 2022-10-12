@@ -11,7 +11,8 @@
     <arg name="rigid" default="true"/>
     <arg name="odom_frame" default="odom"/>
 
-    <node pkg="tf" type="static_transform_publisher" name="baselink_BodyFLU_broadcaster" args="1 0 0 0 0 0 1 base_link body_FLU 100" />
+    <node pkg="tf" type="static_transform_publisher" name="baselink_BodyFLU_broadcaster" args="0 0 0 0 0 0 1 base_link body_FLU 100" />
+    <node pkg="tf" type="static_transform_publisher" name="baselink_os_broadcaster" args="0.032 0.083 -0.217 1 -1 0 0 base_link os_lidar 100" />
 
     <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen" ns="os_node">
         <remap from="~imu" to="/dji_sdk/imu"/>
