@@ -1,0 +1,30 @@
+<launch>
+
+    <param name="/use_sim_time" value="true" />
+
+    <arg name="debug" default="false"/>
+    <env if="$(arg debug)" name="ROSCONSOLE_CONFIG_FILE" value="$(find llol)/launch/debug.conf"/>
+
+    <arg name="tbb" default="1"/>
+    <arg name="log" default="0"/>
+    <arg name="vis" default="false"/>
+    <arg name="rigid" default="true"/>
+    <arg name="odom_frame" default="odom"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_BodyFLU_broadcaster" args="1 0 0 0 0 0 1 base_link body_FLU 100" />
+
+    <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen" ns="os_node">
+        <remap from="~imu" to="/dji_sdk/imu"/>
+        <remap from="~image" to="image"/>
+        <remap from="~camera_info" to="camera_info"/>
+        <remap from="~cloud" to="/os_cloud_node/points"/>
+
+        <rosparam command="load" file="$(find llol)/config/llol_drz_dji.yaml" />
+        <param name="tf_overwrite" type="bool" value="true"/>
+        <param name="tbb" type="int" value="$(arg tbb)"/>
+        <param name="log" type="int" value="$(arg log)"/>
+        <param name="vis" type="bool" value="$(arg vis)"/>
+        <param name="rigid" type="bool" value="$(arg rigid)"/>
+        <param name="odom_frame" type="string" value="$(arg odom_frame)"/>
+    </node>
+</launch>

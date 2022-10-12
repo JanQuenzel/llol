@@ -28,6 +28,7 @@ struct OdomNode {
   bool pc_row_major_{true};
 
   bool rigid_{false};
+  bool tf_overwrite_{false};
   bool tf_init_{false};
   bool scan_init_{false};
   bool traj_updated_{false};

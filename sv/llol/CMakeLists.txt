@@ -10,7 +10,7 @@ cc_test(
 cc_library(
   NAME llol_scan
   SRCS "scan.cpp"
-  DEPS sv_util_math sv_util_ocv Sophus::Sophus)
+  DEPS sv_util_math sv_util_ocv sophus)
 cc_test(
   NAME llol_scan_test
   SRCS "scan_test.cpp"
@@ -19,7 +19,7 @@ cc_test(
 cc_library(
   NAME llol_imu
   SRCS "imu.cpp"
-  DEPS sv_util_math Sophus::Sophus ) #Boost::boost)
+  DEPS sv_util_math sophus ) #Boost::boost)
 cc_test(
   NAME llol_imu_test
   SRCS "imu_test.cpp"

@@ -10,13 +10,13 @@ option(BUILD_TESTING "Build tests" Off)
 option(BUILD_BENCHMARK "Build benchmarks" Off)
 option(BUILD_MARCH_NATIVE "Build with -march=native" OFF)
 
-
 # build absl as static lib
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set ( BUILD_SHARED_LIBS_TMP ${BUILD_SHARED_LIBS} )
 set ( BUILD_SHARED_LIBS OFF )
 set(ABSL_BUILD_TESTING OFF CACHE BOOL "Build absl testing")
 add_subdirectory(${PROJECT_SOURCE_DIR}/deps/abseil )
+add_subdirectory(Sophus)
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_TMP})
 
 set(CC_TARGET_PREFIX sv)
@@ -51,7 +51,7 @@ find_package(Glog REQUIRED)
 #find_package(absl REQUIRED)
 #find_package(Boost REQUIRED)
 
-find_package(Sophus REQUIRED)
+#find_package(Sophus REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
@@ -67,7 +67,6 @@ if(catkin_FOUND AND BUILD_NODE)
 #  include_directories(${catkin_INCLUDE_DIRS})
 endif()
 
-#add_subdirectory(abseil-cpp)
 #add_subdirectory(fmt)
 
 enable_testing()
