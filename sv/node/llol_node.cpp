@@ -25,6 +25,9 @@ OdomNode::OdomNode(const ros::NodeHandle& pnh)
   pc_row_major_ = pnh_.param<bool>("pc_row_major", true);
   ROS_INFO_STREAM("PointCloudRowMajor: " << (pc_row_major_ ? "True" : "False"));
 
+  stamp_at_the_front_ = pnh_.param<bool>("stamp_at_the_front", false);
+  ROS_INFO_STREAM("StampAtTheFront: " << (stamp_at_the_front_ ? "True" : "False"));
+
   tbb_ = pnh_.param<int>("tbb", 0);
   ROS_INFO_STREAM("Tbb grainsize: " << tbb_);
 
@@ -177,10 +180,14 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
     constexpr uint32_t pixel_range_offset = sizeof(float)*3;
     constexpr uint32_t pixel_intensity_offset = sizeof(float)*3+sizeof(uint16_t);
-    uint32_t offset_reflectivity = 0;
+    uint32_t offset_reflectivity = 0, offset_time = 0;
     for(size_t i=0; i<cloud_msg->fields.size(); ++i)
+    {
         if ( cloud_msg->fields[i].name=="reflectivity" )
             offset_reflectivity = cloud_msg->fields[i].offset;
+        if ( cloud_msg->fields[i].name=="t" )
+            offset_time = cloud_msg->fields[i].offset;
+    }
 
     //cv::Mat img = cv::Mat(cloud_msg->height, cloud_msg->width, CV_8UC1);
     //ROS_INFO_STREAM( "size: h: " << cloud_msg->height << " w: " << cloud_msg->width << " np: " << num_points);
@@ -231,6 +238,20 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
         //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
         }
         });
+
+
+    }
+    if ( stamp_at_the_front_ )
+    {
+        int64_t new_stamp_offset = 0;
+        for ( int point_idx = num_points-1; point_idx >= 0 && new_stamp_offset == 0; --point_idx )
+        {
+            const uint32_t & t_ns = *reinterpret_cast<const uint32_t*>(&cloud_msg->data[cloud_msg->point_step * point_idx + offset_time]);
+            if ( t_ns <= 0 ) continue;
+            new_stamp_offset = t_ns;
+        }
+        image_msg->header.stamp += ros::Duration().fromNSec(new_stamp_offset);
+        cinfo_msg->header.stamp = image_msg->header.stamp;
     }
 
     //cv::imwrite("./blub.png", img);

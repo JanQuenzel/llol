@@ -26,6 +26,7 @@ struct OdomNode {
   int log_{0};
   bool vis_{true};
   bool pc_row_major_{true};
+  bool stamp_at_the_front_{false};
 
   bool rigid_{false};
   bool tf_overwrite_{false};
