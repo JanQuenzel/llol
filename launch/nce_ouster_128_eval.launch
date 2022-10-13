@@ -11,6 +11,8 @@
 
     <!--<include file="$(find ouster_decoder)/launch/driver.launch" />
     <include file="$(find ouster_decoder)/launch/decoder.launch" />-->
+
+    <include file="$(find halo_description)/launch/view_urdf.launch" />
  
     <node pkg="tf" type="static_transform_publisher" name="imu_tf" args=" 0 0 0 0 0 0 imu_link imu_sensor_frame 100 " />
 
