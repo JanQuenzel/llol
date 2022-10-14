@@ -5,7 +5,7 @@
     <arg name="debug" default="false"/>
     <env if="$(arg debug)" name="ROSCONSOLE_CONFIG_FILE" value="$(find llol)/launch/debug.conf"/>
 
-    <arg name="tbb" default="1"/>
+    <arg name="tbb" default="0"/>
     <arg name="log" default="0"/>
     <arg name="vis" default="false"/>
     <arg name="pc_row_major" default="false"/>

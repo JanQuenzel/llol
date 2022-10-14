@@ -11,7 +11,7 @@
     <include file="$(find ouster_decoder)/launch/driver.launch" />
     <include file="$(find ouster_decoder)/launch/decoder.launch" />
 
-    <!--launch-prefix="gdb -ex run --args"-->
+    <!--launch-prefix="gdb -ex run -args"-->
 
     <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen"  ns="os_node">
         <remap from="~imu" to="imu"/>

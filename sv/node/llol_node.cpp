@@ -238,8 +238,6 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
         //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
         }
         });
-
-
     }
     if ( stamp_at_the_front_ )
     {
