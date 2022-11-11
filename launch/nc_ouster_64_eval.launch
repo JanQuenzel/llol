@@ -1,0 +1,39 @@
+<launch>
+    <arg name="debug" default="false"/>
+    <env if="$(arg debug)" name="ROSCONSOLE_CONFIG_FILE" value="$(find llol)/launch/debug.conf"/>
+
+    <arg name="tbb" default="0"/>
+    <arg name="log" default="0"/>
+    <arg name="vis" default="false"/>
+    <arg name="pc_row_major" default="false"/>
+    <arg name="stamp_at_the_front" default="false"/>
+    <arg name="rigid" default="true"/>
+    <arg name="odom_frame" default="odom"/>
+
+    <!--<include file="$(find ouster_decoder)/launch/driver.launch" />
+    <include file="$(find ouster_decoder)/launch/decoder.launch" />-->
+
+    <!--<include file="$(find halo_description)/launch/view_urdf.launch" />-->
+ 
+    <!--<node pkg="tf" type="static_transform_publisher" name="imu_tf" args=" 0 0 0 0 0 0 imu_link imu_sensor_frame 100 " />-->
+
+    <node pkg="tf" type="static_transform_publisher" name="sensor_imu_broadcaster" args=" 0.006253 -0.011775 0.007645 0 0 0 os1_sensor os1_imu 100 "/>
+    <node pkg="tf" type="static_transform_publisher" name="sensor_lidar_broadcaster" args=" 0.0 0.0 0.03618 0 0 1 0 os1_sensor os1_lidar 100 "/>
+    <node pkg="tf" type="static_transform_publisher" name="base_imu_broadcaster" args=" 0 0 0 0 0 0 os1_imu base_link 100 "/>
+
+    <node pkg="llol" type="sv_node_llol" name="llol_odom" output="screen" ns="os_node">
+        <remap from="~imu" to="/os1_cloud_node/imu"/>
+        <remap from="~image" to="image"/>
+        <remap from="~camera_info" to="camera_info"/>
+        <remap from="~cloud" to="/os1_cloud_node/points"/>
+
+        <rosparam command="load" file="$(find llol)/config/llol_nc.yaml" />
+        <param name="tbb" type="int" value="$(arg tbb)"/>
+        <param name="log" type="int" value="$(arg log)"/>
+        <param name="vis" type="bool" value="$(arg vis)"/>
+        <param name="pc_row_major" type="bool" value="$(arg pc_row_major)"/>
+        <param name="stamp_at_the_front" type="bool" value="$(arg stamp_at_the_front)"/>
+        <param name="rigid" type="bool" value="$(arg rigid)"/>
+        <param name="odom_frame" type="string" value="$(arg odom_frame)"/>
+    </node>
+</launch>

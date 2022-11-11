@@ -50,7 +50,10 @@ OdomNode::OdomNode(const ros::NodeHandle& pnh)
 
 void OdomNode::ImuCb(const sensor_msgs::Imu& imu_msg) {
   if (imu_frame_.empty()) {
-    imu_frame_ = imu_msg.header.frame_id;
+    std::string frame_id = imu_msg.header.frame_id;
+    if ( !frame_id.empty() && frame_id[0] == '/' )
+      frame_id.erase(0,1);
+    imu_frame_ = frame_id;
     ROS_INFO_STREAM("Imu frame: " << imu_frame_);
   }
 
@@ -82,7 +85,7 @@ void OdomNode::ImuCb(const sensor_msgs::Imu& imu_msg) {
   // Get tf between imu and lidar and initialize gravity direction
   try {
     const auto tf_i_l = tf_buffer_.lookupTransform(
-        imu_msg.header.frame_id, lidar_frame_, ros::Time(0));
+        imu_frame_, lidar_frame_, ros::Time(0));
 
     const auto& t = tf_i_l.transform.translation;
     const auto& q = tf_i_l.transform.rotation;
@@ -177,6 +180,13 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
     cinfo_msg->header = cloud_msg->header;
     image_msg->header = cloud_msg->header;
+
+    std::string frame_id = cloud_msg->header.frame_id;
+    if ( !frame_id.empty() && frame_id[0] == '/' )
+      frame_id.erase(0,1);
+    cinfo_msg->header.frame_id = frame_id;
+    image_msg->header.frame_id = frame_id;
+
 
     constexpr uint32_t pixel_range_offset = sizeof(float)*3;
     constexpr uint32_t pixel_intensity_offset = sizeof(float)*3+sizeof(uint16_t);
