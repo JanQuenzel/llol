@@ -188,7 +188,7 @@ void OdomNode::Publish(const std_msgs::Header& header) {
     if( posesFile.is_open() )
     {
       posesFile << (pose.header.stamp.toNSec()) << " " << pose.pose.position.x << " " << pose.pose.position.y << " " << pose.pose.position.z
-                << " " << pose.pose.orientation.x << " " << pose.pose.orientation.y << " " << pose.pose.orientation.z << " " << pose.pose.orientation.w <<"\n";
+                << " " << pose.pose.orientation.x << " " << pose.pose.orientation.y << " " << pose.pose.orientation.z << " " << pose.pose.orientation.w <<std::endl;
     }
   }
 
