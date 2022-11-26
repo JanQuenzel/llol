@@ -238,14 +238,24 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
               for (int i = blk.begin(); i < blk.end(); ++i)
         //for ( size_t i = 0; i < num_points; ++i )
         {
-            // the cloud is col major
-            const int row = i % cloud_msg->height;
-            const int col = i / cloud_msg->height;
-            const uint32_t i_new = col + row * cloud_msg->width;
-            //const uint32_t i_new = row + col * cloud_msg->height;
+//            // the cloud is col major
+//            const int row = i % cloud_msg->height;
+//            const int col = i / cloud_msg->height;
+//            const uint32_t i_new = col + row * cloud_msg->width;
+//            //const uint32_t i_new = row + col * cloud_msg->height;
+//            const uint32_t point_start = point_step * i;
+//            const uint32_t pixel_start = pixel_step * i_new;
 
+            // the cloud is col major and image should be row major ( step = width * sizeof(pt) )
+            // pc is col major aka, first col of height, than second col of height etc...
+            const uint32_t col = i / cloud_msg->height; // this col should be correct
+            const uint32_t row = i - col * cloud_msg->height;
+            const uint32_t col_shifted = (col + cloud_msg->width + pixel_shift_by_row[row]-add_offset) % cloud_msg->width;
+            const uint32_t i_new = col_shifted + row * cloud_msg->width;
+            //const uint32_t i_new = row + cloud_msg->height * col_shifted;
             const uint32_t point_start = point_step * i;
             const uint32_t pixel_start = pixel_step * i_new;
+
             const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
             Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
             *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
