@@ -155,6 +155,8 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
     static sensor_msgs::CameraInfo::Ptr cinfo_msg = nullptr; ( new sensor_msgs::CameraInfo );
     static sensor_msgs::Image::Ptr image_msg  = nullptr;
 
+    static const uint32_t pixel_shift_by_row_os0_128[128] ={64,43,22,1,63,42,22,3,62,42,23,3,61,42,23,4,60,41,23,5,59,41,23,6,59,41,23,6,58,41,24,7,58,41,24,7,57,40,24,7,57,40,24,8,57,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,8,56,40,24,7,57,40,24,7,57,40,23,7,57,40,23,6,58,40,23,6,58,41,23,5,59,41,23,4,59,41,22,4,60,41,22,3,61,41,22,2,62,42,21,0};
+    static const uint32_t pixel_shift_by_row_os1_64[64] ={19,12,6,0,19,13,6,0,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,19,13,7,1,20,13,7,1,20,14,8,1};
     if ( ! cinfo_msg  )
     {
         cinfo_msg = sensor_msgs::CameraInfo::Ptr( new sensor_msgs::CameraInfo );
@@ -202,6 +204,8 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
     //cv::Mat img = cv::Mat(cloud_msg->height, cloud_msg->width, CV_8UC1);
     //ROS_INFO_STREAM( "size: h: " << cloud_msg->height << " w: " << cloud_msg->width << " np: " << num_points);
 
+    const uint32_t * const pixel_shift_by_row = cloud_msg->height == 128 ? &pixel_shift_by_row_os0_128[0] : &pixel_shift_by_row_os1_64[0];
+    const uint32_t add_offset = cloud_msg->height == 128 ? 33 : 15;
     if ( pc_row_major_ )
     {
         tbb::parallel_for(
@@ -209,14 +213,16 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
               for (int i = blk.begin(); i < blk.end(); ++i)
         //for ( size_t i = 0; i < num_points; ++i )
         {
-            // the cloud is row major
-            const int row = i % cloud_msg->height;
-            const int col = i / cloud_msg->height;
-            //const uint32_t i_new = col + row * cloud_msg->width;
-            const uint32_t i_new = row + col * cloud_msg->height;
+            // the cloud is row major and image should be too ( since step = width * sizeof(pt) )
+            // + pc is row major aka, first row of width, than second row of width etc...
+            const uint32_t row = i / cloud_msg->width; // this row should be correct
+            const uint32_t col = i - row * cloud_msg->width;
+            const uint32_t col_shifted = (col + cloud_msg->width - pixel_shift_by_row[row]+add_offset) % cloud_msg->width;
+            const uint32_t i_new = row * cloud_msg->width + col_shifted;
 
-            const uint32_t point_start = point_step * i;
-            const uint32_t pixel_start = pixel_step * i_new;
+            const uint32_t point_start = point_step * i_new;
+            const uint32_t pixel_start = pixel_step * i;
+
             const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
             Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
             *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
