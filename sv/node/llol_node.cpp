@@ -146,7 +146,7 @@ void OdomNode::Initialize(const sensor_msgs::CameraInfo& cinfo_msg) {
 void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
     if ( !cloud_msg->is_dense ) return;
 
-    constexpr float freq = 20;
+    constexpr float freq = 20.f;
     constexpr int range_scale = 512;
     constexpr uint32_t pixel_step = sizeof(float)*4;
     const uint32_t point_step = cloud_msg->point_step;
@@ -206,6 +206,7 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
     const uint32_t * const pixel_shift_by_row = cloud_msg->height == 128 ? &pixel_shift_by_row_os0_128[0] : &pixel_shift_by_row_os1_64[0];
     const uint32_t add_offset = cloud_msg->height == 128 ? 33 : 15;
+    constexpr float max_dist = 127.f;
     if ( pc_row_major_ )
     {
         tbb::parallel_for(
@@ -224,9 +225,11 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
             const uint32_t pixel_start = pixel_step * i;
 
             const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
-            Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
-            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
-            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) =
+            const float dist = p.norm();
+            const uint16_t scale_val = dist < max_dist;
+            Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = scale_val * p;
+            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = scale_val * dist * range_scale;
+            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) = scale_val *
                     *reinterpret_cast<const uint16_t*>(&cloud_msg->data[point_start + offset_reflectivity]);
         //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
         }
@@ -257,9 +260,11 @@ void OdomNode::LidarCb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
             const uint32_t pixel_start = pixel_step * i_new;
 
             const Eigen::Vector3f p = Eigen::Map<const Eigen::Vector3f>(reinterpret_cast<const float*>(&cloud_msg->data[point_start]));
-            Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = p;
-            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = p.norm() * range_scale;
-            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) =
+            const float dist = p.norm();
+            const uint16_t scale_val = dist < max_dist;
+            Eigen::Map<Eigen::Vector3f>((float*)&image_msg->data[pixel_start]) = scale_val * p;
+            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_range_offset]) = scale_val * dist * range_scale;
+            *reinterpret_cast<uint16_t*>(&image_msg->data[pixel_start + pixel_intensity_offset]) = scale_val *
                     *reinterpret_cast<const uint16_t*>(&cloud_msg->data[point_start + offset_reflectivity]);
         //    img.at<uint8_t>(row,col) = std::max<int>(std::min<int>(255. * p.norm() / 25., 255),0);
         }

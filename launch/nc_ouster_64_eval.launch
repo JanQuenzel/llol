@@ -2,7 +2,7 @@
     <arg name="debug" default="false"/>
     <env if="$(arg debug)" name="ROSCONSOLE_CONFIG_FILE" value="$(find llol)/launch/debug.conf"/>
 
-    <arg name="tbb" default="0"/>
+    <arg name="tbb" default="1"/>
     <arg name="log" default="0"/>
     <arg name="vis" default="false"/>
     <arg name="pc_row_major" default="false"/>
@@ -13,7 +13,7 @@
     <!--<include file="$(find ouster_decoder)/launch/driver.launch" />
     <include file="$(find ouster_decoder)/launch/decoder.launch" />-->
 
-    <!--<include file="$(find halo_description)/launch/view_urdf.launch" />-->
+    <include file="$(find halo_description)/launch/view_urdf.launch" />
  
     <!--<node pkg="tf" type="static_transform_publisher" name="imu_tf" args=" 0 0 0 0 0 0 imu_link imu_sensor_frame 100 " />-->
 
